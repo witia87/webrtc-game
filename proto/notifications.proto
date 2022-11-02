@@ -1,0 +1,7 @@
+syntax = "proto3";
+package notifications;
+
+enum NotificationType {
+  EntitiesStateUpdate = 0;
+}
+

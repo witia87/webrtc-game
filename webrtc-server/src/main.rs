@@ -7,6 +7,7 @@ use webrtc_server::comms::messenger::Messenger;
 use webrtc_server::comms::ticker::Ticker;
 
 use webrtc_server::html::html_server;
+use webrtc_server::messages;
 
 const DEFAULT_CHANNEL_BUFFER_SIZE: usize = 100;
 
@@ -92,4 +93,5 @@ async fn main() {
                 .ok();
         }
     }
+
 }

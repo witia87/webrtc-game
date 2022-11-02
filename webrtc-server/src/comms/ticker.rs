@@ -25,7 +25,7 @@ impl Ticker {
         let mut index = 0;
         let now = time::Instant::now();
         loop {
-            tokio::time::sleep(ROUND_INTERVAL).await;
+            time::sleep(ROUND_INTERVAL).await;
             index = index + 1;
             let time_elapsed = now.elapsed();
             ticks_sender.send(Tick { index, time_elapsed }).await

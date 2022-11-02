@@ -1,0 +1,11 @@
+syntax = "proto3";
+package commands;
+
+enum CommandType {
+  Move = 0;
+}
+
+message Command {
+  CommandType type = 1;
+  bytes payload = 2;
+}

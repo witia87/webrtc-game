@@ -1,0 +1,27 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "es5",
+    "esModuleInterop": true,
+    "allowJs": false,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "./src"
+  ]
+}
