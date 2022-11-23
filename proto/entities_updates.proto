@@ -1,0 +1,17 @@
+syntax = "proto3";
+package entities_updates;
+
+import "commons.proto";
+
+enum EntityUpdateType {
+  PlayerPositionUpdate = 0;
+}
+
+message EntityUpdate {
+  EntityUpdateType entity_update_type = 1;
+  bytes entity_update_payload_bytes = 2;
+}
+
+message PlayerPositionUpdatePayload {
+  commons.Vector2 new_position = 1;
+}

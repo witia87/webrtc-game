@@ -1,0 +1,12 @@
+syntax = "proto3";
+package player_actions;
+
+import "commons.proto";
+
+enum PlayerActionType {
+  Move = 0;
+}
+
+message MovePlayerActionPayload {
+  commons.Vector2 direction = 1;
+}

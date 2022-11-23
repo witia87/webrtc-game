@@ -1,7 +1,17 @@
 syntax = "proto3";
 package notifications;
 
+import "entities_updates.proto";
+
 enum NotificationType {
-  EntitiesStateUpdate = 0;
+  WorldStateUpdateNotification = 0;
 }
 
+message Notification {
+  NotificationType notification_type = 1;
+  bytes notification_payload = 2;
+}
+
+message WorldStateUpdate {
+  repeated entities_updates.EntityUpdate entities_updates = 1;
+}

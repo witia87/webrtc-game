@@ -1,3 +1,3 @@
 pub mod messenger;
 pub mod commands_collector;
-pub mod ticker;
+pub mod players_store;

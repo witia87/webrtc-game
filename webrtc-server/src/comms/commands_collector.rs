@@ -1,76 +1,30 @@
-use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc::{Receiver, Sender};
-use crate::comms::messenger::Message;
-use crate::comms::ticker::Tick;
+use linked_hash_map::LinkedHashMap;
+use prost::Message;
+use crate::messages::commands::{Command, CommandType};
 
-pub struct CommandsCollector {
-    commands_map: Arc<Mutex<HashMap<SocketAddr, Message>>>,
-}
+pub fn parse_commands(collected_incoming_messages: LinkedHashMap<SocketAddr, Vec<u8>>,
+                      players_mapper: fn(&SocketAddr) -> Option<u32>)
+                      -> LinkedHashMap<CommandType, LinkedHashMap<u32, Vec<u8>>> {
+    let mut parsed_commands = LinkedHashMap::new();
 
-impl CommandsCollector {
-    pub fn create(messages_receiver: Receiver<Message>,
-                  ticks_receiver: Receiver<Tick>,
-                  collected_commands_sender: Sender<HashMap<SocketAddr, Message>>)
-                  -> CommandsCollector {
-        let commands_collector = CommandsCollector {
-            commands_map: Arc::new(Mutex::new(HashMap::new()))
-        };
-
-        commands_collector.start_listening_to_messages(messages_receiver);
-        commands_collector.start_listening_to_ticks(ticks_receiver, collected_commands_sender);
-
-        commands_collector
-    }
-
-    pub fn start_listening_to_messages(&self,
-                                       messages_receiver: Receiver<Message>) {
-        let shared_commands_map = self.commands_map.clone();
-        tokio::spawn(
-            Self::listen_to_messages(messages_receiver, shared_commands_map));
-    }
-
-    pub fn start_listening_to_ticks(&self,
-                                    ticks_receiver: Receiver<Tick>,
-                                    collected_commands_sender: Sender<HashMap<SocketAddr, Message>>) {
-        let shared_commands_map = self.commands_map.clone();
-        tokio::spawn(
-            Self::listen_to_ticks(
-                ticks_receiver,
-                collected_commands_sender,
-                shared_commands_map));
-    }
-
-    async fn listen_to_ticks(mut ticks_receiver: Receiver<Tick>,
-                             collected_commands_sender: Sender<HashMap<SocketAddr, Message>>,
-                             shared_commands_map: Arc<Mutex<HashMap<SocketAddr, Message>>>) {
-        loop {
-            match ticks_receiver.recv().await {
-                Some(tick) => {
-                    dbg!(tick.index, tick.time_elapsed);
-                    let cloned_commands = shared_commands_map.lock().unwrap().clone();
-                    shared_commands_map.lock().unwrap().clear();
-                    collected_commands_sender.send(cloned_commands).await
-                        .map_err(|err| log::warn!("failed to publish collected commands {}", err))
-                        .ok();
+    for (socket_addr, data) in collected_incoming_messages {
+        match (players_mapper(&socket_addr), Command::decode(&*data)) {
+            (Some(player_id), Ok(command)) => {
+                match CommandType::from_i32(command.command_type) {
+                    Some(command_type) => {
+                        if !parsed_commands.contains_key(&command_type) {
+                            parsed_commands.insert(command_type, LinkedHashMap::new());
+                        }
+                        let commands = parsed_commands.get_mut(&command_type).unwrap();
+                        commands.insert(player_id, command.command_payload);
+                    }
+                    None => log::error!("failed to parse a command - ignoring")
                 }
-                None => log::error!("failed to receive tick")
-            };
+            }
+            (_, _) => log::error!("failed to parse a command - ignoring")
         }
     }
 
-    async fn listen_to_messages(mut messages_receiver: Receiver<Message>,
-                                shared_commands_map: Arc<Mutex<HashMap<SocketAddr, Message>>>) {
-        loop {
-            match messages_receiver.recv().await {
-                Some(message) => {
-                    shared_commands_map.lock().unwrap().insert(message.socket_addr, message);
-                }
-                None => {
-                    log::error!("failed to receive message from CommandsCollector receiver");
-                }
-            };
-        }
-    }
+    parsed_commands
 }

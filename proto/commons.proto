@@ -1,5 +1,5 @@
 syntax = "proto3";
-package common;
+package commons;
 
 message Vector2 {
   float x = 1;

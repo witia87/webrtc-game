@@ -1,15 +1,11 @@
-use tokio::sync::mpsc;
 use clap::{App, Arg};
+use tokio::sync::mpsc;
 
 use webrtc_unreliable::Server as RtcServer;
-use webrtc_server::comms::commands_collector::CommandsCollector;
-use webrtc_server::comms::messenger::Messenger;
-use webrtc_server::comms::ticker::Ticker;
-
+use webrtc_server::comms::messenger;
+use webrtc_server::comms::messenger::DEFAULT_CHANNEL_BUFFER_SIZE;
+use webrtc_server::comms::players_store::PlayersStore;
 use webrtc_server::html::html_server;
-use webrtc_server::messages;
-
-const DEFAULT_CHANNEL_BUFFER_SIZE: usize = 100;
 
 #[tokio::main]
 async fn main() {
@@ -68,30 +64,17 @@ async fn main() {
 
     html_server::start_hosting(session_endpoint, session_listen_addr);
 
-    let (received_messages_sender, messages_receiver)
-        = mpsc::channel(DEFAULT_CHANNEL_BUFFER_SIZE);
     let (messages_to_send_sender, messages_to_send_receiver)
         = mpsc::channel(DEFAULT_CHANNEL_BUFFER_SIZE);
-    Messenger::create(rtc_server, received_messages_sender, messages_to_send_receiver);
+    let mut messenger_ticks_receiver = messenger::start(rtc_server, messages_to_send_receiver);
 
-
-    let (ticks_sender, ticks_receiver)
-        = mpsc::channel(DEFAULT_CHANNEL_BUFFER_SIZE);
-    let (collected_commands_sender, mut collected_commands_receiver)
-        = mpsc::channel(DEFAULT_CHANNEL_BUFFER_SIZE);
-    CommandsCollector::create(
-        messages_receiver, ticks_receiver, collected_commands_sender);
-
-    Ticker::create(ticks_sender);
+    let mut players_store = PlayersStore::new();
 
     loop {
-        let commands = collected_commands_receiver.recv().await.unwrap();
-        dbg!(commands.len());
-        for (_, message) in commands {
-            messages_to_send_sender.send(message).await
-                .map_err(|err| log::warn!("failed to publish tick {}", err))
-                .ok();
-        }
-    }
+        let messenger_tick = messenger_ticks_receiver.recv().await.unwrap();
 
+        let players_data = players_store.update(&messenger_tick.clients_data);
+
+        println!("Tick {:?} {:?}", messenger_tick.round_index, messenger_tick.total_game_time_elapsed);
+    }
 }

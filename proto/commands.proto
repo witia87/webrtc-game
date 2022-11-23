@@ -1,11 +1,18 @@
 syntax = "proto3";
 package commands;
 
+import "player_actions.proto";
+
 enum CommandType {
-  Move = 0;
+  PlayerActionCommand = 0;
 }
 
 message Command {
-  CommandType type = 1;
-  bytes payload = 2;
+  CommandType command_type = 1;
+  bytes command_payload = 2;
+}
+
+message PlayerAction {
+  player_actions.PlayerActionType playerActionType = 1;
+  bytes player_action_payload = 2;
 }
