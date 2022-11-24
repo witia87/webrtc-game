@@ -4,7 +4,7 @@ use crate::game::systems::System;
 use crate::messages::entities_updates::{EntityUpdate, PlayerPositionUpdatePayload};
 use crate::messages::entities_updates::EntityUpdateType::PlayerPositionUpdate;
 use crate::messages::player_actions::{MovePlayerActionPayload};
-use prost::Message as ProstMessage;
+use prost::{DecodeError, Message as ProstMessage};
 
 pub struct MovementSystem {
     players_positions: LinkedHashMap<u32, Vector2>,
@@ -26,16 +26,21 @@ impl System for MovementSystem {
 
     fn apply_player_action(&mut self,
                            player_id: &u32,
-                           player_action_payload_bytes: &Vec<u8>) {
-        let player_action_payload = MovePlayerActionPayload::decode(player_action_payload_bytes.as_slice()).unwrap();
-        let current_position = self.players_positions.get(&player_id).unwrap();
-        let direction = player_action_payload.direction.unwrap();
+                           player_action_payload_bytes: &Vec<u8>) -> Result<(), DecodeError> {
+        match MovePlayerActionPayload::decode(player_action_payload_bytes.as_slice()) {
+            Ok(player_action_payload) => {
+                let current_position = self.players_positions.get(&player_id).unwrap();
+                let direction = player_action_payload.direction.unwrap();
 
-        self.players_positions[player_id] =
-            Vector2 {
-                x: current_position.x + direction.x,
-                y: current_position.y + direction.y,
-            };
+                self.players_positions[player_id] =
+                    Vector2 {
+                        x: current_position.x + direction.x,
+                        y: current_position.y + direction.y,
+                    };
+                Ok(())
+            }
+            Err(err) => Err(err)
+        }
     }
 
     fn remove_player(&mut self,

@@ -1,11 +1,17 @@
 use clap::{App, Arg};
+use linked_hash_map::LinkedHashMap;
 use tokio::sync::mpsc;
 
 use webrtc_unreliable::Server as RtcServer;
+use webrtc_server::comms::commands_parser::parse_commands;
 use webrtc_server::comms::messenger;
 use webrtc_server::comms::messenger::DEFAULT_CHANNEL_BUFFER_SIZE;
+use webrtc_server::comms::player_actions_parser::parse_player_actions;
 use webrtc_server::comms::players_store::PlayersStore;
+use webrtc_server::game::RoundInput;
+use webrtc_server::game::world::World;
 use webrtc_server::html::html_server;
+use webrtc_server::messages::commands::CommandType;
 
 #[tokio::main]
 async fn main() {
@@ -70,10 +76,20 @@ async fn main() {
 
     let mut players_store = PlayersStore::new();
 
+    let mut world = World::new();
+
     loop {
         let messenger_tick = messenger_ticks_receiver.recv().await.unwrap();
 
         let players_data = players_store.update(&messenger_tick.clients_data);
+
+        let commands_map = parse_commands(
+            messenger_tick.collected_incoming_messages, &players_store);
+
+        let players_actions = parse_player_actions(
+            commands_map.get(&CommandType::PlayerActionCommand).unwrap_or(&LinkedHashMap::new()));
+
+        world.execute_next_round(&RoundInput { players_data, players_actions_for_each_type: players_actions });
 
         println!("Tick {:?} {:?}", messenger_tick.round_index, messenger_tick.total_game_time_elapsed);
     }

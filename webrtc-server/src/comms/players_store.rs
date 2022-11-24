@@ -64,4 +64,10 @@ impl PlayersStore {
             active_players,
         }
     }
+
+    pub fn get_player_id(&self,
+                         socket_addr: &SocketAddr)
+                         -> Option<&u32> {
+        self.player_ids.get(socket_addr)
+    }
 }

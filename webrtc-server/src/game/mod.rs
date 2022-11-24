@@ -1,13 +1,14 @@
 use linked_hash_map::LinkedHashMap;
 use crate::comms::players_store::PlayersData;
 use crate::messages::entities_updates::EntityUpdate;
+use crate::messages::player_actions::PlayerActionType;
 
 pub mod world;
 pub mod systems;
 
 pub struct RoundInput {
     pub players_data: PlayersData,
-    pub players_actions: LinkedHashMap<u32, Vec<u8>>,
+    pub players_actions_for_each_type: LinkedHashMap<PlayerActionType, LinkedHashMap<u32, Vec<u8>>>,
 }
 
 pub struct RoundOutput {
