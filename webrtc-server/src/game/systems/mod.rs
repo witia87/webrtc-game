@@ -1,7 +1,7 @@
 pub mod movement_system;
 
 use prost::DecodeError;
-use crate::messages::entities_updates::EntityUpdate;
+use crate::messages::entities_updates::EntitiesUpdate;
 
 pub trait System {
     fn join_player(&mut self,
@@ -14,5 +14,5 @@ pub trait System {
     fn remove_player(&mut self,
                      player_id: &u32);
 
-    fn collect_entities_updates(&self) -> Vec<EntityUpdate>;
+    fn collect_entities_updates(&self) -> EntitiesUpdate;
 }

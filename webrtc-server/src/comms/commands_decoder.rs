@@ -4,9 +4,9 @@ use prost::Message;
 use crate::comms::players_store::PlayersStore;
 use crate::messages::commands::{Command, CommandType};
 
-pub fn parse_commands(collected_incoming_messages: LinkedHashMap<SocketAddr, Vec<u8>>,
-                      players_store: &PlayersStore)
-                      -> LinkedHashMap<CommandType, LinkedHashMap<u32, Vec<u8>>> {
+pub fn decode_commands(collected_incoming_messages: LinkedHashMap<SocketAddr, Vec<u8>>,
+                       players_store: &PlayersStore)
+                       -> LinkedHashMap<CommandType, LinkedHashMap<u32, Vec<u8>>> {
     let mut parsed_commands = LinkedHashMap::new();
 
     for (socket_addr, data) in collected_incoming_messages {

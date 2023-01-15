@@ -4,7 +4,8 @@ package notifications;
 import "entities_updates.proto";
 
 enum NotificationType {
-  WorldStateUpdateNotification = 0;
+  PlayerSetupNotification = 0;
+  EntitiesUpdatesNotification = 1;
 }
 
 message Notification {
@@ -12,6 +13,10 @@ message Notification {
   bytes notification_payload = 2;
 }
 
-message WorldStateUpdate {
-  repeated entities_updates.EntityUpdate entities_updates = 1;
+message PlayerSetupNotificationPayload {
+  uint32 assignedPlayerId = 1;
+}
+
+message EntitiesUpdatesNotificationPayload {
+  repeated entities_updates.EntitiesUpdate entities_updates = 1;
 }

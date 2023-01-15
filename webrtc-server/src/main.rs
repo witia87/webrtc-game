@@ -1,12 +1,15 @@
+use std::net::SocketAddr;
 use clap::{App, Arg};
 use linked_hash_map::LinkedHashMap;
 use tokio::sync::mpsc;
 
 use webrtc_unreliable::Server as RtcServer;
-use webrtc_server::comms::commands_parser::parse_commands;
+use webrtc_server::comms::commands_decoder::decode_commands;
+use webrtc_server::comms::entities_updates_encoder::encode_entities_updates_notification;
 use webrtc_server::comms::messenger;
 use webrtc_server::comms::messenger::DEFAULT_CHANNEL_BUFFER_SIZE;
-use webrtc_server::comms::player_actions_parser::parse_player_actions;
+use webrtc_server::comms::player_actions_decoder::decode_player_actions;
+use webrtc_server::comms::player_setups_encoder::encode_player_setup_notification;
 use webrtc_server::comms::players_store::PlayersStore;
 use webrtc_server::game::RoundInput;
 use webrtc_server::game::world::World;
@@ -15,7 +18,7 @@ use webrtc_server::messages::commands::CommandType;
 
 #[tokio::main]
 async fn main() {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    log4rs::init_file("logger_config.yaml", Default::default()).unwrap();
 
     let matches = App::new("echo_server")
         .arg(
@@ -83,14 +86,30 @@ async fn main() {
 
         let players_data = players_store.update(&messenger_tick.clients_data);
 
-        let commands_map = parse_commands(
-            messenger_tick.collected_incoming_messages, &players_store);
+        let player_setup_notifications: Vec<(SocketAddr, Vec<u8>)> = messenger_tick.clients_data.newly_connected_clients.iter()
+            .map(|socket_addr|
+                (socket_addr.clone(), encode_player_setup_notification(
+                    players_store.get_player_id(&socket_addr).unwrap())))
+            .collect();
+        if !player_setup_notifications.is_empty() {
+            messages_to_send_sender.send(player_setup_notifications).await
+                .expect("failed to send player setup notifications");
+        }
 
-        let players_actions = parse_player_actions(
+        let commands_map
+            = decode_commands(messenger_tick.collected_incoming_messages, &players_store);
+
+        let players_actions = decode_player_actions(
             commands_map.get(&CommandType::PlayerActionCommand).unwrap_or(&LinkedHashMap::new()));
 
-        world.execute_next_round(&RoundInput { players_data, players_actions_for_each_type: players_actions });
+        let round_output =
+            world.execute_next_round(&RoundInput { players_data, players_actions_for_each_type: players_actions });
 
-        println!("Tick {:?} {:?}", messenger_tick.round_index, messenger_tick.total_game_time_elapsed);
+        let entities_updates_notifications = messenger_tick.clients_data.active_clients.iter()
+            .map(|socket_addr|
+                (socket_addr.clone(), encode_entities_updates_notification(round_output.entities_updates.clone())))
+            .collect();
+        messages_to_send_sender.send(entities_updates_notifications).await
+            .expect("failed to send entities updates notifications");
     }
 }

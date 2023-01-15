@@ -3,15 +3,16 @@ package entities_updates;
 
 import "commons.proto";
 
-enum EntityUpdateType {
+enum EntitiesUpdateType {
   PlayerPositionUpdate = 0;
 }
 
-message EntityUpdate {
-  EntityUpdateType entity_update_type = 1;
-  bytes entity_update_payload_bytes = 2;
+message EntitiesUpdate {
+  EntitiesUpdateType entities_update_type = 1;
+  repeated bytes entities_update_payloads_bytes = 2;
 }
 
 message PlayerPositionUpdatePayload {
-  commons.Vector2 new_position = 1;
+  uint32 playerId = 1;
+  commons.Vector2 new_position = 2;
 }

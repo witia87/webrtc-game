@@ -16,7 +16,7 @@ pub struct PlayersStore {
 impl PlayersStore {
     pub fn new() -> PlayersStore {
         let players_store = PlayersStore {
-            next_player_id_to_assign: 0,
+            next_player_id_to_assign: 1, // Value 1 mitigates Prost problem when values 0 are not serialised
             player_ids: LinkedHashMap::new(),
         };
         players_store
@@ -26,7 +26,7 @@ impl PlayersStore {
                   clients_data: &ClientsData) -> PlayersData {
         let mut newly_joined_players = Vec::new();
         for socket_addr in &clients_data.newly_connected_clients {
-            if !self.player_ids.contains_key(&socket_addr) {
+            if !self.player_ids.contains_key(socket_addr) {
                 self.player_ids.insert(socket_addr.clone(), self.next_player_id_to_assign);
                 newly_joined_players.push(self.next_player_id_to_assign);
                 self.next_player_id_to_assign = self.next_player_id_to_assign + 1;
@@ -37,8 +37,8 @@ impl PlayersStore {
 
         let mut newly_quit_players = Vec::new();
         for socket_addr in &clients_data.newly_disconnected_clients {
-            if self.player_ids.contains_key(&socket_addr) {
-                let disconnected_player_id = self.player_ids.remove(&socket_addr).unwrap();
+            if self.player_ids.contains_key(socket_addr) {
+                let disconnected_player_id = self.player_ids.remove(socket_addr).unwrap();
                 newly_quit_players.push(disconnected_player_id);
             } else {
                 log::error!("player already quit");
@@ -47,8 +47,8 @@ impl PlayersStore {
 
         let mut active_players = Vec::new();
         for socket_addr in &clients_data.active_clients {
-            if self.player_ids.contains_key(&socket_addr) {
-                let active_player_id = self.player_ids.get(&socket_addr).unwrap();
+            if self.player_ids.contains_key(socket_addr) {
+                let active_player_id = self.player_ids.get(socket_addr).unwrap();
                 active_players.push(active_player_id.clone());
             } else {
                 log::error!("player is not registered as active");

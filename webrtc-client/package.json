@@ -35,7 +35,6 @@
   "dependencies": {
     "pixi.js": "4.8.2",
     "rxjs": "^7.5.4",
-    "super-ecs": "^2.3.0",
     "ts-proto": "^1.131.0"
   }
 }

@@ -1,8 +1,8 @@
 use linked_hash_map::LinkedHashMap;
-use crate::game::RoundInput;
+use crate::game::{RoundInput, RoundOutput};
 use crate::game::systems::movement_system::MovementSystem;
 use crate::game::systems::System;
-use crate::messages::notifications::WorldStateUpdate;
+use crate::messages::entities_updates::EntitiesUpdate;
 use crate::messages::player_actions::{PlayerActionType};
 
 pub struct World {
@@ -20,7 +20,7 @@ impl World {
 
     pub fn execute_next_round(&mut self,
                               round_input: &RoundInput)
-                              -> WorldStateUpdate {
+                              -> RoundOutput {
         for (_, system) in &mut self.systems_map {
             for player_id in &round_input.players_data.newly_quit_players {
                 system.remove_player(&player_id);
@@ -33,8 +33,9 @@ impl World {
             }
         }
 
-        for (actions_type, players_actions) in &round_input.players_actions_for_each_type {
-            //let a = self.systems_map.get(&actions_type).unwrap().as_mut();
+        for (actions_type, players_actions)
+        in &round_input.players_actions_for_each_type {
+            log::debug!("applying command with type {:?}, {:?}", actions_type, players_actions);
             match self.systems_map.get_mut(&actions_type) {
                 Some(system) => {
                     for (player_id, action_payload) in players_actions {
@@ -48,8 +49,14 @@ impl World {
             }
         }
 
-        WorldStateUpdate {
-            entities_updates: Vec::new()
+        let mut entities_updates: Vec<EntitiesUpdate> = Vec::new();
+        for (_, system) in &self.systems_map {
+            entities_updates.push(system.collect_entities_updates());
+        }
+
+        RoundOutput {
+            players_to_disconnect: Vec::new(),
+            entities_updates
         }
     }
 }

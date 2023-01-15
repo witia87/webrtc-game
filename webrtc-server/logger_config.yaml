@@ -1,0 +1,16 @@
+appenders:
+  my_file_logger:
+    kind: rolling_file
+    path: "target/logs/info.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S)(utc)} - {h({l})}: {m}{n}"
+    policy:
+      trigger:
+        kind: size
+        limit: 1Mb
+      roller:
+        kind: delete
+root:
+  level: info
+  appenders:
+    - my_file_logger

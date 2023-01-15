@@ -1,8 +1,8 @@
 use linked_hash_map::LinkedHashMap;
 use crate::messages::commons::Vector2;
 use crate::game::systems::System;
-use crate::messages::entities_updates::{EntityUpdate, PlayerPositionUpdatePayload};
-use crate::messages::entities_updates::EntityUpdateType::PlayerPositionUpdate;
+use crate::messages::entities_updates::{EntitiesUpdate, PlayerPositionUpdatePayload};
+use crate::messages::entities_updates::EntitiesUpdateType::PlayerPositionUpdate;
 use crate::messages::player_actions::{MovePlayerActionPayload};
 use prost::{DecodeError, Message as ProstMessage};
 
@@ -48,18 +48,22 @@ impl System for MovementSystem {
         self.players_positions.remove(player_id);
     }
 
-    fn collect_entities_updates(&self) -> Vec<EntityUpdate> {
-        let mut entities_updates = Vec::new();
+    fn collect_entities_updates(&self) -> EntitiesUpdate {
+        let mut payloads = Vec::new();
+
         for player_id in self.players_positions.keys() {
             let new_position = self.players_positions.get(player_id).unwrap();
-            entities_updates.push(EntityUpdate {
-                entity_update_type: PlayerPositionUpdate as i32,
-                entity_update_payload_bytes: PlayerPositionUpdatePayload
+            payloads.push(PlayerPositionUpdatePayload
                 {
+                    player_id: player_id.clone(),
                     new_position: Some(new_position.clone())
-                }.encode_to_vec(),
-            })
+                }.encode_to_vec()
+            )
         };
-        entities_updates
+
+        EntitiesUpdate {
+            entities_update_type: PlayerPositionUpdate as i32,
+            entities_update_payloads_bytes: payloads,
+        }
     }
 }

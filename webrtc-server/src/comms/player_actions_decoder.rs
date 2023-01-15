@@ -3,8 +3,8 @@ use prost::{Message};
 use crate::messages::commands::{PlayerAction};
 use crate::messages::player_actions::PlayerActionType;
 
-pub fn parse_player_actions(collected_player_actions: &LinkedHashMap<u32, Vec<u8>>)
-                            -> LinkedHashMap<PlayerActionType, LinkedHashMap<u32, Vec<u8>>> {
+pub fn decode_player_actions(collected_player_actions: &LinkedHashMap<u32, Vec<u8>>)
+                             -> LinkedHashMap<PlayerActionType, LinkedHashMap<u32, Vec<u8>>> {
     let mut parsed_player_actions = LinkedHashMap::new();
 
     for (player_id, player_action_bytes) in collected_player_actions {

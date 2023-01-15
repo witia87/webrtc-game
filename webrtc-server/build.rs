@@ -9,6 +9,7 @@ fn main() -> Result<()> {
 
 fn build_protobufs(input_directory: &str,
                    output_directory: &str) -> Result<()> {
+
     let mut prototypes: Vec<PathBuf> = Vec::new();
     for element in std::path::Path::new(input_directory).read_dir().unwrap() {
         let path = element.unwrap().path();

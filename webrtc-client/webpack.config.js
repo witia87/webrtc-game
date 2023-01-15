@@ -16,6 +16,9 @@ module.exports = {
       '/new_rtc_session': 'http://localhost:8081'
     }
   },
+  optimization: {
+    minimize: false
+  },
   module: {
     rules: [
       {

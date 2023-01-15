@@ -1,14 +1,28 @@
-### super-ecs example
+### webrtc-client setup
 
-To run the example,
+Project startup is based on:
+https://github.com/goldenratio/super-ecs-example
+
+
+
+Install protobuf:
+```
+npm install ts-proto
+```
+
+Compile Protobuf to TypeScript
+```
+protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --proto_path=../proto/ --ts_proto_out=./src/comms/messages/ ../proto/*.proto
+```
+
+Install dependencies
 
 ```
 npm i
-npm run start
 ```
 
-Protobuf:
-npm install ts-proto
+Start hosting a client app
 
-Compile Protobuf to TypeScript
-protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --proto_path=../proto/ --ts_proto_out=./src/messages/ ../proto/*.proto
+```
+npm run start
+```
